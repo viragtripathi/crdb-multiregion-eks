@@ -1,0 +1,22 @@
+
+statefulset:
+  replicas: 3
+
+tls:
+  enabled: true
+  certs:
+    selfSigner:
+      enabled: true
+
+network:
+  external:
+    sql:
+      type: LoadBalancer
+      port: 26257
+    http:
+      type: LoadBalancer
+      port: 8080
+
+conf:
+  cacheSize: 512MiB
+  maxSQLMemory: 512MiB

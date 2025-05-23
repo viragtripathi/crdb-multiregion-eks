@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: crdb-backup
+spec:
+  schedule: "0 */6 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: cockroachdb/cockroach:v25.1.6
+              command: ["/cockroach"]
+              args: ["sql", "--execute=BACKUP TO 's3://your-bucket-name/backup?AWS_ACCESS_KEY_ID=xxx&AWS_SECRET_ACCESS_KEY=yyy'"]
+          restartPolicy: OnFailure
