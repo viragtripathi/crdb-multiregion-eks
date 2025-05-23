@@ -4,36 +4,6 @@ Deploy a secure, highly available CockroachDB cluster across three AWS regions u
 
 ---
 
-### Directory Structure
-/
-├── modules/
-│   ├── vpc/
-│   ├── eks/
-│   ├── dns/
-│   └── cockroachdb/
-│       ├── values.yaml
-│       ├── test-client.yaml
-│       ├── monitoring/
-│       │   ├── prometheus.yaml
-│       │   └── grafana.yaml
-│       └── backup/
-│           └── schedule.yaml
-├── regions/
-│   ├── us-east-1/
-│   │   └── main.tf
-│   ├── eu-central-1/
-│   │   └── main.tf
-│   └── ap-southeast-1/
-│       └── main.tf
-├── .github/
-│   └── workflows/
-│       └── deploy.yml
-├── Makefile
-├── README.md
-└── terraform.tfvars
-
----
-
 ### Sample Region Config (regions/eu-central-1/main.tf)
 ```hcl
 module "vpc" {
