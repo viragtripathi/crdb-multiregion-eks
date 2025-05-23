@@ -1,5 +1,8 @@
-:new-cockroach:
-data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7
+# CockroachDB Multi-Region Deployment on EKS
+
+Deploy a secure, highly available CockroachDB cluster across three AWS regions using Amazon EKS, CoreDNS for multi-region DNS, Helm for orchestration, Prometheus/Grafana for observability, and S3 for automated backups. This setup follows best practices for quorum-based distributed systems.
+
+---
 
 ### Directory Structure
 /
@@ -17,8 +20,11 @@ data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7
 │           └── schedule.yaml
 ├── regions/
 │   ├── us-east-1/
+│   │   └── main.tf
 │   ├── eu-central-1/
+│   │   └── main.tf
 │   └── ap-southeast-1/
+│       └── main.tf
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml
@@ -26,13 +32,56 @@ data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7
 ├── README.md
 └── terraform.tfvars
 
+---
+
+### Sample Region Config (regions/eu-central-1/main.tf)
+```hcl
+module "vpc" {
+  source = "../../modules/vpc"
+  region = "eu-central-1"
+  cidr_block = "10.1.0.0/16"
+  private_subnet_cidrs = ["10.1.1.0/24", "10.1.2.0/24"]
+  azs = ["eu-central-1a", "eu-central-1b"]
+}
+```
+
+### terraform.tfvars
+```hcl
+region = "us-east-1"
+```
+
+### CoreDNS ConfigMap (modules/eks/coredns-configmap.yaml)
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns
+  namespace: kube-system
+  labels:
+    eks.amazonaws.com/component: coredns
+    k8s-app: kube-dns
+    kubernetes.io/name: "CoreDNS"
+    kubernetes.io/cluster-service: "true"
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health
+        rewrite name suffix us-east-1.cluster.local. dns-lb-us.cluster.local.
+        rewrite name suffix eu-central-1.cluster.local. dns-lb-eu.cluster.local.
+        rewrite name suffix ap-southeast-1.cluster.local. dns-lb-apac.cluster.local.
+        forward . /etc/resolv.conf
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+```
+
+---
 ### Makefile
-# (Unchanged)
 
-### GitHub Actions (.github/workflows/deploy.yml)
-# (Unchanged)
-
-You can now use:
+You can use:
 - `make init` – initialize all Terraform regions
 - `make apply` – deploy all infrastructure
 - `make patch-coredns` – update CoreDNS in all clusters
